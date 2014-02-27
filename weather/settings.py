@@ -113,3 +113,13 @@ EMAIL_HOST_PASSWORD = ''
 EMAIL_HOST_USER = ''
 EMAIL_PORT = '25'
 EMAIL_USE_TLS = False
+
+#local settings
+
+try:
+    from settings_local import *
+except ImportError:
+    pass
+
+
+
