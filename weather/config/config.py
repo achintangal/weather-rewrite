@@ -9,8 +9,14 @@ Configuration settings.
 @var base_url: The root URL for the Tor Weather web application.
 """
 
+from django.conf import settings
+
 # XXX: Make bulletproof
-authenticator = open("/home/weather/opt/current/weather/config/auth_token", "r").read().strip()
+# Check for test flags+
+if(settings.TESTING):
+    authenticator = settings.AUTHENTICATOR
+else:
+    authenticator = open("/home/weather/opt/current/weather/config/auth_token", "r").read().strip()
 
 #The Tor control port to use
 control_port = 9051

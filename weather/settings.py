@@ -114,12 +114,17 @@ EMAIL_HOST_USER = ''
 EMAIL_PORT = '25'
 EMAIL_USE_TLS = False
 
-#local settings
 
-try:
-    from settings_local import *
-except ImportError:
-    pass
+# Choose settings suitable for the environment
+# (development or production)
+
+import os
+
+if os.environ['ENVIRONMENT'] == 'testing':
+     from settings_testing import *
+    
+    
+        
 
 
 
