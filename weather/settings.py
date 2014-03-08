@@ -6,6 +6,20 @@ PROJECT_PATH = os.path.realpath(os.path.dirname(__file__))
 DEBUG = False #set to true to see stack traces instead of standard html errors
 TEMPLATE_DEBUG = DEBUG
 
+
+TESTING=True
+MAILS= os.path.join(PROJECT_PATH+'/log'+'/mails')
+
+#By default, send outgoing mail to a file for testing mode. Comment out to use local SMTP server for production mode
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = 'log/app-emails' # change this to a proper location
+
+
+# Stem Settings. Shouldn't be necessary once Onionoo interface is implemented.
+# Use the control_auth_cookie of your local tor process.
+AUTHENTICATOR= ' '
+
+
 ADMINS = (
      ('Weather Admin', 'kaner@torproject.org'),
 )
@@ -17,8 +31,11 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': PROJECT_PATH + "/../var/WeatherDB",                      # Or path to database file if using sqlite3.
+        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.         
+       
+        'NAME': PROJECT_PATH + "/../var/WeatherDB", # Or path to database file if using sqlite3.
+    
+        #'NAME' :  os.path.join(PROJECT_PATH, 'db') + '/development.db', # uncomment for testing/development
         'TEST_NAME': 'WeatherTestDB',
         'USER': '',                      # Not used with sqlite3.
         'PASSWORD': '',                  # Not used with sqlite3.
@@ -118,13 +135,9 @@ EMAIL_USE_TLS = False
 # Choose settings suitable for the environment
 # (development or production)
 
-import os
+#import os
 
-if os.environ['ENVIRONMENT'] == 'testing':
-     from settings_testing import *
+#if os.environ['ENVIRONMENT'] == 'testing':
+   #  from settings_testing import *
     
     
-        
-
-
-
