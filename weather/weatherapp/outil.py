@@ -6,8 +6,51 @@ to Onionoo and hands out information about routers.
 
 import logging
 import requests
+import json
+import string
+import re
 
-class OnooUtil:
+## CONSTANTS ##
+UNPARSABLE = 'unparsable-mail.log'
+
+
+def deobfuscate_mail(contact):
+    """
+    Parse the email address from an individual router descriptor string.
+
+    @type contact: str
+    @param contact: Email address from the server descriptor.
+    @rtype: str
+    @return: The email address in desc. If the email address cannot be
+    parsed, the empty string.
+    """
+
+    punct = string.punctuation
+    clean_line = contact.replace('<', '').replace('>', '')
+
+    email = re.search('[^\s]+'
+                      '(?:@|[' + punct + '\s]+at[' + punct + '\s]+).+'
+                      '(?:\.|[' + punct + '\s]+dot[' + punct + '\s]+)[^\n\s\)\(]+',
+                      clean_line, re.IGNORECASE)
+
+    if email is None or email == "":
+        logger.debug("Couldn't parse an email address from line:\n%s" % contact)
+        unparsable = open(UNPARSABLE, 'a')
+        unparsable.write(contact.encode('utf-8') + '\n')
+        unparsable.close()
+        email = ""
+    else:
+        email = email.group()
+        email = email.lower()
+        email = re.sub('[' + punct + '\s]+(at|ta)[' + punct + '\s]+', '@', email)
+        email = re.sub('[' + punct + '\s]+(dot|tod|d0t)[' + punct + '\s]+', '.', email)
+        email = re.sub('[' + punct + '\s]+hyphen[' + punct + '\s]+', '-', email)
+
+    return email
+
+
+
+class OUtil:
     
     """
     A class which hands of information about onion routers using
@@ -15,9 +58,9 @@ class OnooUtil:
 
     """
     
-    def __init__(self,bandwidth_doc = bandwidth_doc):
+    def __init__(self,document):
     
-        self.bandwidth_doc = bandwidth_doc
+        self.bandwidth_doc = json.loads(document)
         
     def is_up_or_hibernating(self,fingerprint):
         
@@ -85,7 +128,12 @@ class OnooUtil:
                 return relay["observed_bandwidth"]
 
 
-
-
-
-
+    def get_contact(self,fingerprint):
+        """
+        returns contact information
+        """
+        for relay in self.bandwidth_doc["relays"]:
+            if relay["fingerprint"] == fingerprint:
+                return deobfuscate_mail(relay["contact"])
+                
+        return None
