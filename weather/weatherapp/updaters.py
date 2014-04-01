@@ -1,3 +1,4 @@
+
 """This module's run_all() method is called when a new consensus event is 
 triggered in listener.py. It first populates and updates
 the Router table by storing new routers seen in the consensus document and 
@@ -17,10 +18,10 @@ from datetime import datetime
 import logging
 from smtplib import SMTPException
 
-from weatherapp.ctlutil import CtlUtil
+#from weatherapp.ctlutil import CtlUtil
 from weatherapp.models import Subscriber, Router, NodeDownSub, BandwidthSub, \
                               TShirtSub, VersionSub, DeployedDatetime
-from weatherapp import emails
+from weatherapp import  emails
 
 from django.core.mail import send_mass_mail
 
@@ -69,7 +70,7 @@ def check_node_down(email_list):
             sub.save()
     return email_list
 
-def check_low_bandwidth(ctl_util, email_list):
+def check_low_bandwidth(onion_util, email_list):
     """Checks all L{BandwidthSub} subscriptions, updates the information,
     determines if an email should be sent, and updates email_list.
 
@@ -89,7 +90,7 @@ def check_low_bandwidth(ctl_util, email_list):
         fingerprint = str(sub.subscriber.router.fingerprint)
 
         if sub.subscriber.confirmed:
-            bandwidth = ctl_util.get_bandwidth(fingerprint)
+            bandwidth = onion_util.get_observed_bandwidth(fingerprint)
             if bandwidth < sub.threshold: 
                 if sub.emailed == False:
                     recipient = sub.subscriber.email
@@ -107,7 +108,7 @@ def check_low_bandwidth(ctl_util, email_list):
 
     return email_list
 
-def check_earn_tshirt(ctl_util, email_list):
+def check_earn_tshirt(onion_util, email_list):
     """Check all L{TShirtSub} subscriptions and send an email if necessary. 
     If the node is down, the trigger flag set to False. The average 
     bandwidth is calculated if triggered is True. This method uses the 
@@ -219,7 +220,7 @@ def check_version(ctl_util, email_list):
     return email_list
         
                 
-def check_all_subs(ctl_util, email_list):
+def check_all_subs(onion_util, email_list):
     """Check/update all subscriptions
    
     @type ctl_util: CtlUtil
@@ -232,14 +233,14 @@ def check_all_subs(ctl_util, email_list):
     logging.debug('Checking node down subscriptions.')
     email_list = check_node_down(email_list)
     logging.debug('Checking version subscriptions.')
-    check_version(ctl_util, email_list)
+    #check_version(ctl_util, email_list)
     logging.debug('Checking bandwidth subscriptions.')
-    check_low_bandwidth(ctl_util, email_list)
+    check_low_bandwidth(onion_util, email_list)
     logging.debug('Checking shirt subscriptions.')
-    email_list = check_earn_tshirt(ctl_util, email_list)
+   # email_list = check_earn_tshirt(ctl_util, email_list)
     return email_list
 
-def update_all_routers(ctl_util, email_list):
+def update_all_routers(onion_util, email_list):
     """Add ORs we haven't seen before to the database and update the
     information of ORs that are already in the database. Check if a welcome
     email should be sent and add the email tuples to the list.
@@ -278,13 +279,13 @@ def update_all_routers(ctl_util, email_list):
             router.save()
     
     #Get a list of fingerprint/name tuples in the current descriptor file
-    finger_name = ctl_util.get_finger_name_list()
+    finger_name = onion_util.get_finger_name_list()
 
     for router in finger_name:
         finger = router[0]
         name = router[1]
 
-        if ctl_util.is_up_or_hibernating(finger):
+        if onion_util.is_up_or_hibernating(finger):
 
             router_data = None
             try:
@@ -302,14 +303,14 @@ def update_all_routers(ctl_util, email_list):
             router_data.last_seen = datetime.now()
             router_data.name = name
             router_data.up = True
-            router_data.exit = ctl_util.is_exit(finger)
+            router_data.exit = onion_util.is_exit(finger)
 
             #send a welcome email if indicated
-            if router_data.welcomed == False and ctl_util.is_stable(finger):
-                recipient = ctl_util.get_email(finger)
+            if router_data.welcomed == False and onion_util.is_stable(finger):
+                recipient = onion_util.get_contact(finger)
                 # Don't spam people for now XXX
                 #recipient = "kaner@strace.org"
-                is_exit = ctl_util.is_exit(finger)
+                is_exit = onion_util.is_exit(finger)
                 if not recipient == "":
                     email = emails.welcome_tuple(recipient, finger, name, is_exit)
                     email_list.append(email)
@@ -319,17 +320,17 @@ def update_all_routers(ctl_util, email_list):
 
     return email_list
 
-def run_all():
+def run_all(onion_util):
     """Run all updaters/checkers in proper sequence, then send emails."""
 
     #The CtlUtil for all methods to use
-    ctl_util = CtlUtil()
+    #ctl_util = CtlUtil()
 
     # the list of tuples of email info, gets updated w/ each call
     email_list = []
-    email_list = update_all_routers(ctl_util, email_list)
+    email_list = update_all_routers(onion_util, email_list)
     logging.info('Finished updating routers. About to check all subscriptions.')
-    email_list = check_all_subs(ctl_util, email_list)
+    email_list = check_all_subs(onion_util, email_list)
     logging.info('Finished checking subscriptions. About to send emails.')
     mails = tuple(email_list)
 

@@ -3,7 +3,8 @@ $ python manage.py runlistener
 and automatically import the Django settings module for use
 by it."""
 
-from weatherapp import listener
+#from weatherapp import listener
+from weatherapp import hourly
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -18,4 +19,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """Called when runlistener is called from the command line. Starts
         the listener."""
-        listener.listen()
+        #        listener.listen()
+        hourly.get_documents()

@@ -13,10 +13,8 @@ from django.conf import settings
 
 # XXX: Make bulletproof
 # Check for test flags+
-if(settings.TESTING):
-    authenticator = settings.AUTHENTICATOR
-else:
-    authenticator = open("/home/weather/opt/current/weather/config/auth_token", "r").read().strip()
+
+#   authenticator = open("/home/weather/opt/current/weather/config/auth_token", "r").read().strip()
 
 #The Tor control port to use
 control_port = 9051
